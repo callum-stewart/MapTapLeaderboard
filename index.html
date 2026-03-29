@@ -553,11 +553,11 @@
 </header>
 
 <main>
-<!--
+
   <div id="config-warning">
     ⚠ <strong>Setup required:</strong> Open this file and replace <code>YOUR_SHEET_ID_HERE</code> and <code>YOUR_OAUTH_CLIENT_ID_HERE</code> at the top of the &lt;style&gt; block. See <strong>SETUP.md</strong> for full instructions.
   </div>
--->
+
   <!-- Sign in prompt shown when logged out -->
   <div id="sign-in-prompt" style="display:none">
     <h2>Sign in to play</h2>
@@ -854,13 +854,16 @@ async function fetchCityNames(parsedScore) {
   try {
     const url = `https://maptap.gg/data/this_day_in_history/${parsedScore.month}${parsedScore.day}.js`;
     const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const text = await resp.text();
-    // Strip JS variable wrapper: "cities = [...];"
-    const json = text.replace(/^.*?=\s*/, '').replace(/;?\s*$/, '');
-    const cities = JSON.parse(json);
+    // The file is a JS literal (unquoted keys), not JSON — use Function constructor
+    // to evaluate the array safely, matching MapTap's own approach
+    const m = text.match(/cities\s*=\s*(\[[\s\S]*?\]);/);
+    if (!m) throw new Error('No cities array found in response');
+    const cities = (new Function(`return ${m[1]};`))();
     return cities.map(c => c.name);
   } catch (e) {
-    // Fallback: use document data if available (current day)
+    console.warn('fetchCityNames failed:', e);
     return parsedScore.scores.map((_, i) => `City ${i + 1}`);
   }
 }
