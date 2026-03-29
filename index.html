@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MapTap Family Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  /* ── CONFIG: fill these in ───────────────────────────────────── */
+  /* See SETUP.md for instructions */
+
+  :root {
+    --sheet-id: 'YOUR_SHEET_ID_HERE';
+    --client-id: 'YOUR_OAUTH_CLIENT_ID_HERE';
+
+    --ink:       #1a1208;
+    --paper:     #fdf6e8;
+    --paper2:    #f5ead0;
+    --gold:      #c8922a;
+    --gold-lt:   #f0d080;
+    --red:       #c0392b;
+    --green:     #2d7a4f;
+    --blue:      #2563a8;
+    --muted:     #8a7a60;
+    --border:    #d4bb8a;
+
+    --ff-head:   'Playfair Display', Georgia, serif;
+    --ff-mono:   'DM Mono', 'Courier New', monospace;
+    --ff-body:   'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--ff-body);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(200,146,42,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(200,146,42,0.06) 0%, transparent 60%);
+  }
+
+  /* ── HEADER ───────────────────────────────────────────────────── */
+  header {
+    border-bottom: 2px solid var(--border);
+    padding: 28px 40px 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    background: linear-gradient(to bottom, var(--paper2), var(--paper));
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .logo h1 {
+    font-family: var(--ff-head);
+    font-size: 2.4rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .logo h1 span { color: var(--gold); }
+
+  .logo .sub {
+    font-family: var(--ff-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── AUTH ─────────────────────────────────────────────────────── */
+  #auth-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #user-info {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    display: none;
+  }
+
+  #user-info.visible { display: flex; align-items: center; gap: 8px; }
+
+  #user-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    object-fit: cover;
+  }
+
+  .btn {
+    font-family: var(--ff-mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border-radius: 4px;
+    border: 1.5px solid currentColor;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  .btn-gold {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+  .btn-gold:hover { background: var(--gold); color: var(--paper); }
+
+  .btn-sm {
+    font-size: 0.72rem;
+    padding: 5px 12px;
+    color: var(--muted);
+    border-color: var(--border);
+  }
+  .btn-sm:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* ── MAIN ─────────────────────────────────────────────────────── */
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+
+  /* ── SUBMIT PANEL ─────────────────────────────────────────────── */
+  #submit-panel {
+    background: var(--paper2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 40px;
+    display: none;
+  }
+
+  #submit-panel.visible { display: block; }
+
+  #submit-panel h2 {
+    font-family: var(--ff-head);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .field label {
+    font-family: var(--ff-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field input, .field textarea {
+    font-family: var(--ff-mono);
+    font-size: 0.9rem;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 9px 12px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    resize: vertical;
+  }
+
+  .field input:focus, .field textarea:focus { border-color: var(--gold); }
+
+  #score-preview {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    display: none;
+  }
+
+  #score-preview.visible { display: block; }
+
+  #preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--ff-mono);
+    font-size: 0.82rem;
+  }
+
+  #preview-table th {
+    text-align: left;
+    color: var(--muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 8px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #preview-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--paper2);
+  }
+
+  .score-val { font-weight: 500; color: var(--green); }
+  .final-val { color: var(--gold); font-weight: 500; }
+
+  #preview-final {
+    margin-top: 10px;
+    font-family: var(--ff-mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  #preview-final strong { color: var(--gold); }
+
+  .submit-row { display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+
+  #status-msg {
+    font-family: var(--ff-mono);
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: none;
+  }
+
+  #status-msg.ok   { display: block; background: #d4edd4; color: var(--green); }
+  #status-msg.err  { display: block; background: #fde8e8; color: var(--red); }
+  #status-msg.info { display: block; background: #e8f0fb; color: var(--blue); }
+
+  /* ── LEADERBOARD ──────────────────────────────────────────────── */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1.5px solid var(--border);
+    padding-bottom: 8px;
+  }
+
+  .section-head h2 {
+    font-family: var(--ff-head);
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  .section-head .hint {
+    font-family: var(--ff-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .board-section { margin-bottom: 48px; }
+
+  /* ── TABLES ───────────────────────────────────────────────────── */
+  .board-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  .board-table th {
+    text-align: left;
+    font-family: var(--ff-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 6px 14px 10px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .board-table th:hover { color: var(--ink); }
+  .board-table th.sorted { color: var(--gold); }
+
+  .board-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--paper2);
+    vertical-align: middle;
+  }
+
+  .board-table tr:last-child td { border-bottom: none; }
+
+  .board-table tbody tr {
+    transition: background 0.1s;
+  }
+
+  .board-table tbody tr:hover {
+    background: var(--paper2);
+  }
+
+  .rank {
+    font-family: var(--ff-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    width: 28px;
+    text-align: right;
+  }
+
+  .rank.gold   { color: #c8922a; font-weight: 500; }
+  .rank.silver { color: #8a9ab0; }
+  .rank.bronze { color: #9b6b3a; }
+
+  .nick-cell {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .city-cell {
+    font-family: var(--ff-mono);
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .score-cell {
+    font-family: var(--ff-mono);
+    font-weight: 500;
+    font-size: 0.92rem;
+    text-align: right;
+  }
+
+  .score-cell.high { color: var(--green); }
+  .score-cell.mid  { color: var(--ink); }
+  .score-cell.low  { color: var(--red); }
+
+  .emoji-cell { text-align: center; font-size: 1rem; }
+
+  .date-cell {
+    font-family: var(--ff-mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .final-score-cell {
+    font-family: var(--ff-head);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: right;
+  }
+
+  /* ── MEDAL PODIUM FOR FINAL SCORES ───────────────────────────── */
+  .podium {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .podium-card {
+    flex: 1;
+    min-width: 160px;
+    background: var(--paper2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .podium-card.first {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, #fdf6e8, #f5ead0);
+  }
+
+  .podium-card .medal {
+    font-size: 1.8rem;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .podium-card .p-nick {
+    font-family: var(--ff-head);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .podium-card .p-score {
+    font-family: var(--ff-mono);
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--gold);
+    margin: 4px 0;
+  }
+
+  .podium-card .p-date {
+    font-family: var(--ff-mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── FILTERS ──────────────────────────────────────────────────── */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filters label {
+    font-family: var(--ff-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .filters select, .filters input[type=text] {
+    font-family: var(--ff-mono);
+    font-size: 0.8rem;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    color: var(--ink);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .filters select:focus, .filters input[type=text]:focus { border-color: var(--gold); }
+
+  /* ── EMPTY / LOADING ──────────────────────────────────────────── */
+  .empty {
+    text-align: center;
+    padding: 48px 20px;
+    font-family: var(--ff-mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SIGN-IN PROMPT ───────────────────────────────────────────── */
+  #sign-in-prompt {
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+
+  #sign-in-prompt h2 {
+    font-family: var(--ff-head);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  #sign-in-prompt p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+    font-family: var(--ff-mono);
+  }
+
+  #g-signin-btn { display: inline-block; }
+
+  /* ── DIVIDER ──────────────────────────────────────────────────── */
+  .ornament {
+    text-align: center;
+    font-family: var(--ff-mono);
+    color: var(--border);
+    letter-spacing: 0.5em;
+    font-size: 0.7rem;
+    margin: 32px 0;
+  }
+
+  /* ── CONFIG WARNING ───────────────────────────────────────────── */
+  #config-warning {
+    background: #fef3cd;
+    border: 1.5px solid #f0c040;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-family: var(--ff-mono);
+    font-size: 0.8rem;
+    color: #7a5a00;
+    display: none;
+  }
+
+  #config-warning.visible { display: block; }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 16px 16px; }
+    main { padding: 24px 12px 60px; }
+    .logo h1 { font-size: 1.8rem; }
+    #submit-panel { padding: 20px 16px; }
+    .board-table th, .board-table td { padding: 8px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div>
+      <h1>Map<span>Tap</span></h1>
+      <div class="sub">Family Leaderboard</div>
+    </div>
+  </div>
+  <div id="auth-area">
+    <div id="user-info">
+      <img id="user-avatar" src="" alt="">
+      <span id="user-name"></span>
+      <button class="btn btn-sm" onclick="signOut()">Sign out</button>
+    </div>
+    <div id="g-signin-btn"></div>
+  </div>
+</header>
+
+<main>
+
+  <div id="config-warning">
+    ⚠ <strong>Setup required:</strong> Open this file and replace <code>YOUR_SHEET_ID_HERE</code> and <code>YOUR_OAUTH_CLIENT_ID_HERE</code> at the top of the &lt;style&gt; block. See <strong>SETUP.md</strong> for full instructions.
+  </div>
+
+  <!-- Sign in prompt shown when logged out -->
+  <div id="sign-in-prompt" style="display:none">
+    <h2>Sign in to play</h2>
+    <p>Use your Google account to submit scores and view the leaderboard.</p>
+    <div id="g-signin-btn-main"></div>
+  </div>
+
+  <!-- Submit panel -->
+  <div id="submit-panel">
+    <h2>Submit a score</h2>
+    <div class="form-row">
+      <div class="field" style="max-width:220px">
+        <label>Nickname</label>
+        <input type="text" id="nickname" placeholder="e.g. Callum" maxlength="30" oninput="tryParse()">
+      </div>
+      <div class="field">
+        <label>Paste your MapTap result</label>
+        <textarea id="score-paste" rows="3" placeholder="www.maptap.gg March 29&#10;98🎯 99🎯 99🎯 96🔥 76👏&#10;Final score: 911" oninput="tryParse()"></textarea>
+      </div>
+    </div>
+    <div id="score-preview">
+      <table id="preview-table">
+        <thead>
+          <tr>
+            <th>City</th>
+            <th>Score</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody id="preview-rows"></tbody>
+      </table>
+      <div id="preview-final"></div>
+    </div>
+    <div class="submit-row">
+      <button class="btn btn-gold" id="submit-btn" onclick="submitScore()" disabled>Submit score</button>
+      <div id="status-msg"></div>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div id="leaderboard" style="display:none">
+
+    <!-- FINAL SCORES SECTION -->
+    <div class="board-section">
+      <div class="section-head">
+        <h2>Overall scores</h2>
+        <span class="hint">Best final score per player per day</span>
+      </div>
+      <div id="podium" class="podium"></div>
+      <div class="filters">
+        <label>Player</label>
+        <select id="filter-nick-final" onchange="renderFinalTable()">
+          <option value="">All</option>
+        </select>
+      </div>
+      <table class="board-table" id="final-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th onclick="sortFinal('nick')" id="fh-nick">Player</th>
+            <th onclick="sortFinal('date')" id="fh-date">Date</th>
+            <th onclick="sortFinal('score')" id="fh-score" class="sorted">Score ↓</th>
+          </tr>
+        </thead>
+        <tbody id="final-rows"></tbody>
+      </table>
+      <div id="final-empty" class="empty" style="display:none">No scores yet — submit the first one!</div>
+    </div>
+
+    <div class="ornament">· · · · ·</div>
+
+    <!-- CITY SCORES SECTION -->
+    <div class="board-section">
+      <div class="section-head">
+        <h2>City breakdown</h2>
+        <span class="hint">Individual city scores</span>
+      </div>
+      <div class="filters">
+        <label>Player</label>
+        <select id="filter-nick-city" onchange="renderCityTable()">
+          <option value="">All</option>
+        </select>
+        <label style="margin-left:8px">City</label>
+        <select id="filter-city" onchange="renderCityTable()">
+          <option value="">All cities</option>
+        </select>
+        <label style="margin-left:8px">Date</label>
+        <select id="filter-date" onchange="renderCityTable()">
+          <option value="">All dates</option>
+        </select>
+      </div>
+      <table class="board-table" id="city-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th onclick="sortCity('nick')" id="ch-nick">Player</th>
+            <th onclick="sortCity('city')" id="ch-city">City</th>
+            <th onclick="sortCity('date')" id="ch-date">Date</th>
+            <th onclick="sortCity('score')" id="ch-score" class="sorted">Score ↓</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="city-rows"></tbody>
+      </table>
+      <div id="city-empty" class="empty" style="display:none">No city scores yet.</div>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+// ── CONFIGURATION ────────────────────────────────────────────────
+// Read values set via CSS variables above (fallback to direct strings)
+const CONFIG = {
+  // !! Replace these two strings directly — do not use CSS vars at runtime !!
+  SHEET_ID:  'YOUR_SHEET_ID_HERE',
+  CLIENT_ID: 'YOUR_OAUTH_CLIENT_ID_HERE',
+  SCOPES: 'https://www.googleapis.com/auth/spreadsheets',
+  // Sheet tab names
+  TAB_CITIES: 'CityScores',
+  TAB_FINALS: 'FinalScores',
+};
+
+// ── STATE ─────────────────────────────────────────────────────────
+let tokenClient = null;
+let accessToken = null;
+let userData    = null;
+let parsed      = null;   // currently parsed score
+
+let cityData    = [];   // all rows from CityScores tab
+let finalData   = [];  // all rows from FinalScores tab
+
+let citySort    = { col: 'score', asc: false };
+let finalSort   = { col: 'score', asc: false };
+
+// ── INIT ──────────────────────────────────────────────────────────
+window.onload = () => {
+  checkConfig();
+  initGoogleAuth();
+};
+
+function checkConfig() {
+  if (CONFIG.SHEET_ID === 'YOUR_SHEET_ID_HERE' || CONFIG.CLIENT_ID === 'YOUR_OAUTH_CLIENT_ID_HERE') {
+    document.getElementById('config-warning').classList.add('visible');
+  }
+}
+
+// ── GOOGLE AUTH ───────────────────────────────────────────────────
+function initGoogleAuth() {
+  // Wait for GSI library
+  const waitGSI = setInterval(() => {
+    if (!window.google) return;
+    clearInterval(waitGSI);
+
+    google.accounts.id.initialize({
+      client_id: CONFIG.CLIENT_ID,
+      callback: handleCredentialResponse,
+      auto_select: false,
+    });
+
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CONFIG.CLIENT_ID,
+      scope: CONFIG.SCOPES,
+      callback: handleTokenResponse,
+    });
+
+    // Render sign-in button in header
+    google.accounts.id.renderButton(
+      document.getElementById('g-signin-btn'),
+      { theme: 'outline', size: 'medium', text: 'signin_with', shape: 'rectangular' }
+    );
+    // Render sign-in button in main prompt
+    google.accounts.id.renderButton(
+      document.getElementById('g-signin-btn-main'),
+      { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular' }
+    );
+
+    google.accounts.id.prompt();
+  }, 200);
+}
+
+function handleCredentialResponse(response) {
+  // Decode JWT to get user info
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  userData = { name: payload.name, email: payload.email, picture: payload.picture };
+  onSignedIn();
+
+  // Now get an access token for Sheets API
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+function handleTokenResponse(response) {
+  if (response.error) { console.error('Token error', response); return; }
+  accessToken = response.access_token;
+  loadSheetData();
+}
+
+function onSignedIn() {
+  document.getElementById('user-name').textContent = userData.name;
+  document.getElementById('user-avatar').src = userData.picture;
+  document.getElementById('user-info').classList.add('visible');
+  document.getElementById('sign-in-prompt').style.display = 'none';
+  document.getElementById('submit-panel').classList.add('visible');
+  document.getElementById('leaderboard').style.display = 'block';
+
+  // Pre-fill nickname from name
+  const nick = document.getElementById('nickname');
+  if (!nick.value) nick.value = userData.name.split(' ')[0];
+}
+
+function signOut() {
+  google.accounts.id.disableAutoSelect();
+  accessToken = null; userData = null;
+  document.getElementById('user-info').classList.remove('visible');
+  document.getElementById('submit-panel').classList.remove('visible');
+  document.getElementById('leaderboard').style.display = 'none';
+  document.getElementById('sign-in-prompt').style.display = 'block';
+}
+
+// ── PARSE SCORE ───────────────────────────────────────────────────
+const EMOJI_MAP = { '🎯': 'bullseye', '🔥': 'hot', '👏': 'applause', '⭐': 'star', '💫': 'sparkle' };
+
+function tryParse() {
+  const text = document.getElementById('score-paste').value.trim();
+  parsed = parseScore(text);
+  document.getElementById('submit-btn').disabled = !parsed || !document.getElementById('nickname').value.trim();
+  renderPreview();
+}
+
+function parseScore(text) {
+  if (!text) return null;
+  // Match: "www.maptap.gg Month Day" then scores line then "Final score: NNN"
+  const dateMatch = text.match(/maptap\.gg\s+(\w+)\s+(\d+)/i);
+  const scoresMatch = text.match(/([\d]+[🎯🔥👏⭐💫]\s*){2,}/u);
+  const finalMatch = text.match(/Final score:\s*(\d+)/i);
+  if (!dateMatch || !scoresMatch || !finalMatch) return null;
+
+  const month = dateMatch[1];
+  const day   = dateMatch[2];
+  const year  = new Date().getFullYear();
+  const dateStr = formatDate(new Date(`${month} ${day}, ${year}`));
+
+  const scoreTokens = [...scoresMatch[0].matchAll(/([\d]+)([🎯🔥👏⭐💫])/gu)];
+  if (scoreTokens.length === 0) return null;
+
+  const scores = scoreTokens.map(m => ({
+    score: parseInt(m[1]),
+    emoji: m[2],
+    type:  EMOJI_MAP[m[2]] || '?',
+  }));
+
+  return {
+    month, day, year, dateStr,
+    scores,
+    finalScore: parseInt(finalMatch[1]),
+    cityDataUrl: `https://maptap.gg/data/this_day_in_history/${month}${day}.js`,
+  };
+}
+
+function formatDate(d) {
+  if (isNaN(d)) return '?';
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+function renderPreview() {
+  const preview = document.getElementById('score-preview');
+  const tbody   = document.getElementById('preview-rows');
+  const pfinal  = document.getElementById('preview-final');
+
+  if (!parsed) { preview.classList.remove('visible'); return; }
+  preview.classList.add('visible');
+
+  tbody.innerHTML = parsed.scores.map((s, i) => `
+    <tr>
+      <td class="city-cell">City ${i+1} <span style="color:var(--muted);font-size:0.75em">(loading…)</span></td>
+      <td class="score-val">${s.score}</td>
+      <td class="emoji-cell">${s.emoji}</td>
+    </tr>`).join('');
+
+  pfinal.innerHTML = `Final score: <strong>${parsed.finalScore}</strong> &nbsp;·&nbsp; Date: ${parsed.dateStr}`;
+
+  // Fetch city names to enrich preview
+  fetchCityNames(parsed).then(cities => {
+    const rows = tbody.querySelectorAll('tr');
+    cities.forEach((c, i) => {
+      if (rows[i]) rows[i].querySelector('.city-cell').innerHTML = c;
+    });
+  });
+}
+
+// ── FETCH CITY DATA ───────────────────────────────────────────────
+async function fetchCityNames(parsedScore) {
+  try {
+    const url = `https://maptap.gg/data/this_day_in_history/${parsedScore.month}${parsedScore.day}.js`;
+    const resp = await fetch(url);
+    const text = await resp.text();
+    // Strip JS variable wrapper: "cities = [...];"
+    const json = text.replace(/^.*?=\s*/, '').replace(/;?\s*$/, '');
+    const cities = JSON.parse(json);
+    return cities.map(c => c.name);
+  } catch (e) {
+    // Fallback: use document data if available (current day)
+    return parsedScore.scores.map((_, i) => `City ${i + 1}`);
+  }
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────
+async function submitScore() {
+  if (!parsed || !accessToken) return;
+  const nick = document.getElementById('nickname').value.trim();
+  if (!nick) return;
+
+  setStatus('info', 'Fetching city data…');
+  document.getElementById('submit-btn').disabled = true;
+
+  const cities = await fetchCityNames(parsed);
+
+  setStatus('info', 'Writing to Google Sheets…');
+
+  // Build rows for CityScores tab
+  const cityRows = parsed.scores.map((s, i) => [
+    nick,
+    parsed.dateStr,
+    cities[i] || `City ${i+1}`,
+    s.score,
+    s.emoji,
+  ]);
+
+  // Row for FinalScores tab
+  const finalRow = [nick, parsed.dateStr, parsed.finalScore];
+
+  try {
+    await sheetsAppend(CONFIG.TAB_CITIES, cityRows);
+    await sheetsAppend(CONFIG.TAB_FINALS, [finalRow]);
+    setStatus('ok', `Score submitted! ${parsed.finalScore} pts`);
+    document.getElementById('score-paste').value = '';
+    document.getElementById('score-preview').classList.remove('visible');
+    parsed = null;
+    document.getElementById('submit-btn').disabled = true;
+    loadSheetData();
+  } catch(e) {
+    setStatus('err', `Error: ${e.message}`);
+    document.getElementById('submit-btn').disabled = false;
+  }
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('status-msg');
+  el.className = type;
+  el.textContent = msg;
+}
+
+// ── SHEETS API ────────────────────────────────────────────────────
+async function sheetsAppend(tab, rows) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(tab)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ values: rows }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error(err.error?.message || resp.statusText);
+  }
+  return resp.json();
+}
+
+async function sheetsRead(tab) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(tab)}`;
+  const resp = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${accessToken}` },
+  });
+  if (!resp.ok) throw new Error(`Could not read sheet tab "${tab}"`);
+  const data = await resp.json();
+  return data.values || [];
+}
+
+// ── LOAD DATA ─────────────────────────────────────────────────────
+async function loadSheetData() {
+  if (!accessToken) return;
+  try {
+    const cityRaw  = await sheetsRead(CONFIG.TAB_CITIES);
+    const finalRaw = await sheetsRead(CONFIG.TAB_FINALS);
+
+    // Skip header row if present (detect by checking if first cell is non-numeric / header-like)
+    cityData  = parseSheetRows(cityRaw,  ['nick','date','city','score','emoji']);
+    finalData = parseSheetRows(finalRaw, ['nick','date','score']);
+
+    cityData.forEach(r  => r.score = parseInt(r.score)  || 0);
+    finalData.forEach(r => r.score = parseInt(r.score) || 0);
+
+    populateFilters();
+    renderPodium();
+    renderFinalTable();
+    renderCityTable();
+  } catch(e) {
+    console.warn('Could not load sheet data:', e);
+  }
+}
+
+function parseSheetRows(raw, cols) {
+  if (!raw || raw.length === 0) return [];
+  // If the first row looks like a header, skip it
+  const first = raw[0];
+  const isHeader = first.some(v => isNaN(parseInt(v)) && cols.includes(v?.toLowerCase()));
+  const rows = isHeader ? raw.slice(1) : raw;
+  return rows
+    .filter(r => r && r.length >= cols.length)
+    .map(r => {
+      const obj = {};
+      cols.forEach((c, i) => obj[c] = r[i] || '');
+      return obj;
+    });
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────
+function populateFilters() {
+  const nicks  = [...new Set([...cityData, ...finalData].map(r => r.nick))].sort();
+  const cities = [...new Set(cityData.map(r => r.city))].sort();
+  const dates  = [...new Set([...cityData, ...finalData].map(r => r.date))].sort().reverse();
+
+  fillSelect('filter-nick-city',  nicks);
+  fillSelect('filter-nick-final', nicks);
+  fillSelect('filter-city',  cities);
+  fillSelect('filter-date',  dates);
+}
+
+function fillSelect(id, options) {
+  const el = document.getElementById(id);
+  const cur = el.value;
+  while (el.options.length > 1) el.remove(1);
+  options.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    el.add(opt);
+  });
+  el.value = cur;
+}
+
+// ── PODIUM ────────────────────────────────────────────────────────
+function renderPodium() {
+  // Best final score per player (all time)
+  const best = {};
+  finalData.forEach(r => {
+    if (!best[r.nick] || r.score > best[r.nick].score) best[r.nick] = r;
+  });
+  const sorted = Object.values(best).sort((a,b) => b.score - a.score);
+  const medals = ['🥇','🥈','🥉'];
+
+  const html = sorted.slice(0, 3).map((r, i) => `
+    <div class="podium-card ${i===0?'first':''}">
+      <div class="medal">${medals[i]}</div>
+      <div class="p-nick">${esc(r.nick)}</div>
+      <div class="p-score">${r.score}</div>
+      <div class="p-date">${esc(r.date)}</div>
+    </div>`).join('');
+
+  document.getElementById('podium').innerHTML = html || '';
+}
+
+// ── FINAL TABLE ───────────────────────────────────────────────────
+function sortFinal(col) {
+  finalSort.asc = finalSort.col === col ? !finalSort.asc : false;
+  finalSort.col = col;
+  document.querySelectorAll('[id^=fh-]').forEach(th => th.classList.remove('sorted'));
+  document.getElementById(`fh-${col}`)?.classList.add('sorted');
+  renderFinalTable();
+}
+
+function renderFinalTable() {
+  const nick = document.getElementById('filter-nick-final').value;
+  let rows = finalData.filter(r => !nick || r.nick === nick);
+
+  rows = sortRows(rows, finalSort);
+
+  const tbody = document.getElementById('final-rows');
+  const empty = document.getElementById('final-empty');
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr>
+      <td class="rank ${rankClass(i)}">${i+1}</td>
+      <td class="nick-cell">${esc(r.nick)}</td>
+      <td class="date-cell">${esc(r.date)}</td>
+      <td class="final-score-cell">${r.score}</td>
+    </tr>`).join('');
+}
+
+// ── CITY TABLE ────────────────────────────────────────────────────
+function sortCity(col) {
+  citySort.asc = citySort.col === col ? !citySort.asc : false;
+  citySort.col = col;
+  document.querySelectorAll('[id^=ch-]').forEach(th => th.classList.remove('sorted'));
+  document.getElementById(`ch-${col}`)?.classList.add('sorted');
+  renderCityTable();
+}
+
+function renderCityTable() {
+  const nick = document.getElementById('filter-nick-city').value;
+  const city = document.getElementById('filter-city').value;
+  const date = document.getElementById('filter-date').value;
+
+  let rows = cityData.filter(r =>
+    (!nick || r.nick === nick) &&
+    (!city || r.city === city) &&
+    (!date || r.date === date)
+  );
+
+  rows = sortRows(rows, citySort);
+
+  const tbody = document.getElementById('city-rows');
+  const empty = document.getElementById('city-empty');
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr>
+      <td class="rank ${rankClass(i)}">${i+1}</td>
+      <td class="nick-cell">${esc(r.nick)}</td>
+      <td class="city-cell">${esc(r.city)}</td>
+      <td class="date-cell">${esc(r.date)}</td>
+      <td class="score-cell ${scoreClass(r.score)}">${r.score}</td>
+      <td class="emoji-cell">${esc(r.emoji)}</td>
+    </tr>`).join('');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function sortRows(rows, { col, asc }) {
+  return [...rows].sort((a, b) => {
+    let va = a[col], vb = b[col];
+    if (col === 'score') { va = +va; vb = +vb; }
+    else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+    if (va < vb) return asc ? -1 : 1;
+    if (va > vb) return asc ? 1 : -1;
+    return 0;
+  });
+}
+
+function rankClass(i) {
+  return i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+}
+
+function scoreClass(s) {
+  s = parseInt(s);
+  if (s >= 95) return 'high';
+  if (s >= 80) return 'mid';
+  return 'low';
+}
+
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+
+</body>
+</html>
