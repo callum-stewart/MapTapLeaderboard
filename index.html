@@ -764,7 +764,7 @@ function handleCredentialResponse(response) {
 }
 
 function handleTokenResponse(response) {
-  if (response.error) { console.error('Token error', response); return; }
+  if (response.error) { log('Token error', response); return; }
   log('access token received');
   accessToken = response.access_token;
   loadSheetData();
