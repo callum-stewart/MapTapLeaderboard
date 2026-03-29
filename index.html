@@ -792,7 +792,7 @@ function parseScore(text) {
   if (!text) return null;
   // Match: "www.maptap.gg Month Day" then scores line then "Final score: NNN"
   const dateMatch = text.match(/maptap\.gg\s+(\w+)\s+(\d+)/i);
-  const scoresMatch = text.match(/([\d]+[🎯🔥👏⭐💫]\s*){2,}/u);
+  const scoresMatch = text.match(/(\d+(?:\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*){2,}/u);
   const finalMatch = text.match(/Final score:\s*(\d+)/i);
   if (!dateMatch || !scoresMatch || !finalMatch) return null;
 
@@ -801,7 +801,7 @@ function parseScore(text) {
   const year  = new Date().getFullYear();
   const dateStr = formatDate(new Date(`${month} ${day}, ${year}`));
 
-  const scoreTokens = [...scoresMatch[0].matchAll(/([\d]+)([🎯🔥👏⭐💫])/gu)];
+  const scoreTokens = [...scoresMatch[0].matchAll(/(\d+)(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu)];
   if (scoreTokens.length === 0) return null;
 
   const scores = scoreTokens.map(m => ({
