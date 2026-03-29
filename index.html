@@ -670,6 +670,16 @@
 </main>
 
 <script>
+
+const dbg = document.createElement('div');
+dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font:11px monospace;padding:8px;max-height:40vh;overflow-y:auto;z-index:9999';
+document.body.appendChild(dbg);
+function log(...args) {
+  const line = document.createElement('div');
+  line.textContent = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+  dbg.prepend(line);
+  console.log(...args);
+}
 // ── CONFIGURATION ────────────────────────────────────────────────
 // Read values set via CSS variables above (fallback to direct strings)
 const CONFIG = {
@@ -708,10 +718,12 @@ function checkConfig() {
 
 // ── GOOGLE AUTH ───────────────────────────────────────────────────
 function initGoogleAuth() {
+
   // Wait for GSI library
   const waitGSI = setInterval(() => {
     if (!window.google) return;
     clearInterval(waitGSI);
+    log('GSI loaded, initialising...');
 
     google.accounts.id.initialize({
       client_id: CONFIG.CLIENT_ID,
@@ -742,6 +754,7 @@ function initGoogleAuth() {
 
 function handleCredentialResponse(response) {
   // Decode JWT to get user info
+  log('credential response received');
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   userData = { name: payload.name, email: payload.email, picture: payload.picture };
   onSignedIn();
@@ -752,6 +765,7 @@ function handleCredentialResponse(response) {
 
 function handleTokenResponse(response) {
   if (response.error) { console.error('Token error', response); return; }
+  log('access token received');
   accessToken = response.access_token;
   loadSheetData();
 }
@@ -961,6 +975,7 @@ async function loadSheetData() {
     renderFinalTable();
     renderCityTable();
   } catch(e) {
+    log('loadSheetData error', e.message);
     console.warn('Could not load sheet data:', e);
   }
 }
