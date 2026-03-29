@@ -754,9 +754,11 @@ function initGoogleAuth() {
 
 function handleCredentialResponse(response) {
   // Decode JWT to get user info
+  if (response.error) { log('credential response error', response); return; }
   log('credential response received');
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   userData = { name: payload.name, email: payload.email, picture: payload.picture };
+  log('credential response parse', userData);
   onSignedIn();
 
   // Now get an access token for Sheets API
