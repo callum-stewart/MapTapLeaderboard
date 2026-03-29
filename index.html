@@ -747,7 +747,7 @@ function handleCredentialResponse(response) {
   onSignedIn();
 
   // Now get an access token for Sheets API
-  tokenClient.requestAccessToken({ prompt: '' });
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 function handleTokenResponse(response) {
